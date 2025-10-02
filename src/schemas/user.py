@@ -20,3 +20,4 @@ class UserRead(BaseModel):
     email: EmailStr
     username: str
     name: str
+    balance: float
