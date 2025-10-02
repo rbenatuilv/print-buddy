@@ -34,10 +34,13 @@ class User(SQLModel, table=True):
         nullable=False
     )
 
-
     pwd: str = Field(nullable=False)
 
     is_active: bool = Field(default=True)
+
+    is_admin: bool = Field(default=False)
+
+    balance: float = Field(nullable=False, default=0.0)
 
     created_at: datetime = Field(
         default_factory=generate_time, 
