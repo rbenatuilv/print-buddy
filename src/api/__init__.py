@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from .routes import auth
+from .routes import auth, user
 
 
 router = APIRouter()
@@ -16,3 +16,4 @@ def root():
 
 
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
+router.include_router(user.router, prefix="/user", tags=["user"])
