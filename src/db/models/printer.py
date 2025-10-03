@@ -1,9 +1,15 @@
 from sqlmodel import SQLModel, Field
 from datetime import datetime
 import uuid
+from enum import Enum
 
 from ...core.utils import generate_time
 
+
+class PrinterStatus(str, Enum):
+    IDLE = "idle"
+    PRINTING = "printing"
+    STOP = "stopped"
 
 class Printer(SQLModel, table=True):
 
@@ -15,6 +21,11 @@ class Printer(SQLModel, table=True):
     name: str = Field(nullable=False, index=True)
 
     location: str = Field(nullable=True)
+
+    status: PrinterStatus = Field(
+        nullable=False, 
+        default=PrinterStatus.IDLE
+    )
 
     price_per_page: float = Field(nullable=False, default=0.0)
 
