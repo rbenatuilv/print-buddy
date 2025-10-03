@@ -1,8 +1,8 @@
-"""Create printer and printerjob models 2
+"""Create and modify printer and printer job model
 
-Revision ID: d5e8d55ae6ac
-Revises: 6e7b23f58960
-Create Date: 2025-10-03 00:01:33.277983
+Revision ID: b9994814458d
+Revises: 71a8e003a441
+Create Date: 2025-10-03 14:39:49.280497
 
 """
 from typing import Sequence, Union
@@ -13,8 +13,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd5e8d55ae6ac'
-down_revision: Union[str, Sequence[str], None] = '6e7b23f58960'
+revision: str = 'b9994814458d'
+down_revision: Union[str, Sequence[str], None] = '71a8e003a441'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -26,6 +26,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('location', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('status', sa.Enum('IDLE', 'PRINTING', 'STOP', name='printerstatus'), nullable=False),
     sa.Column('price_per_page', sa.Float(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
