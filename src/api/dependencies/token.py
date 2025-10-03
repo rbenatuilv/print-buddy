@@ -8,17 +8,6 @@ from typing import Annotated
 from ...core.security import Security
 
 
-
-class AuthCreds(HTTPAuthorizationCredentials):
-
-    def __init__(self, token: dict, scheme: str = ''):
-        self.token = token
-        super().__init__(scheme=scheme, credentials='')
-
-    def __getitem__(self, index):
-        return self.token[index]
-
-
 class TokenBearer(HTTPBearer):
 
     def __init__(self, auto_error: bool = True):
@@ -36,9 +25,12 @@ class TokenBearer(HTTPBearer):
             )
         
         if creds is not None:
-            return AuthCreds(token=token, scheme=creds.scheme)
+            return HTTPAuthorizationCredentials(
+                scheme=creds.scheme, 
+                credentials=token['uid']
+            )
     
 
 TokenDep = Annotated[
-    AuthCreds, Depends(TokenBearer())
+    HTTPAuthorizationCredentials, Depends(TokenBearer())
 ]
