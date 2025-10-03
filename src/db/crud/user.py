@@ -51,3 +51,13 @@ class UserService:
         user = session.exec(statement).first()
 
         return user
+    
+    def get_user_by_id(
+        self,
+        id: str,
+        session: Session
+    ):
+        statement = select(User).where(User.id == id)
+        user = session.exec(statement).first()
+
+        return user
