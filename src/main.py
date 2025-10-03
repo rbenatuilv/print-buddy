@@ -25,7 +25,7 @@ app = FastAPI(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[settings.URL, "127.0.0.1", "localhost"]
+    allowed_hosts=[settings.URL, "127.0.0.1", "localhost", "archimind", "*.local"]
 )
 
 app.include_router(router)
