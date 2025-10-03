@@ -27,9 +27,11 @@ class Printer(SQLModel, table=True):
         default=PrinterStatus.IDLE
     )
 
-    price_per_page: float = Field(nullable=False, default=0.0)
+    price_per_page_bw: float = Field(nullable=False, default=0.0)
 
-    is_active: bool = Field(nullable=False, default=True)
+    admits_color: bool = Field(default=False, nullable=False)
+
+    price_per_page_color: float = Field(default=0.0)
 
     created_at: datetime = Field(
         default_factory=generate_time, 
