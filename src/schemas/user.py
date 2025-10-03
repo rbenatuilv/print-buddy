@@ -16,8 +16,8 @@ class UserLogin(BaseModel):
 
 
 class UserRead(BaseModel):
-    id: uuid.UUID
     email: EmailStr
     username: str
     name: str
+    surname: str
     balance: float

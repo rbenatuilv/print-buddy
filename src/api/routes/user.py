@@ -20,7 +20,7 @@ def get_me(
     token: TokenDep,
     session: SessionDep
 ):
-    user_id = token['uid']
+    user_id = token.credentials
 
     user = user_service.get_user_by_id(user_id, session)
     if user is None:
