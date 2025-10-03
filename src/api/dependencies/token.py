@@ -8,13 +8,24 @@ from typing import Annotated
 from ...core.security import Security
 
 
-class TokenBearer:
 
-    def __init__(self):
-        self.scheme = HTTPBearer()
+class AuthCreds(HTTPAuthorizationCredentials):
 
-    async def __call__(self, request: Request) -> dict:
-        creds: HTTPAuthorizationCredentials | None = await self.scheme(request)
+    def __init__(self, token: dict, scheme: str = ''):
+        self.token = token
+        super().__init__(scheme=scheme, credentials='')
+
+    def __getitem__(self, index):
+        return self.token[index]
+
+
+class TokenBearer(HTTPBearer):
+
+    def __init__(self, auto_error: bool = True):
+        super().__init__(auto_error=auto_error)
+
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
+        creds = await super().__call__(request)
 
         token = Security.decode_token(creds.credentials) if creds else None
 
@@ -24,9 +35,10 @@ class TokenBearer:
                 detail="Unauthorized access"
             )
         
-        return token
+        if creds is not None:
+            return AuthCreds(token=token, scheme=creds.scheme)
     
 
 TokenDep = Annotated[
-    dict, Depends(TokenBearer())
+    AuthCreds, Depends(TokenBearer())
 ]
