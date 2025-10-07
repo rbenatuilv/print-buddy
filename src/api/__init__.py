@@ -16,5 +16,5 @@ def root():
 
 
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
-router.include_router(user.router, prefix="/user", tags=["user"])
+router.include_router(user.router, prefix="/users", tags=["users"])
 router.include_router(printer.router, prefix="/printers", tags=["printers"])
