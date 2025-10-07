@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
 from ..models.user import User
-from ...schemas.user import UserCreate
+from ...schemas.user import UserCreate, UserUpdate
 
 
 class UserService:
@@ -23,6 +23,20 @@ class UserService:
         return user
     
     ########################## READ ##########################
+
+    def user_is_admin(
+        self,
+        id: str,
+        session: Session
+    ) -> bool:
+        
+        stmt = select(User).where(User.id == id)
+        user = session.exec(stmt).first()
+        
+        if user is None:
+            return False
+        
+        return user.is_admin
 
     def email_exists(
         self,
@@ -59,5 +73,38 @@ class UserService:
     ):
         statement = select(User).where(User.id == id)
         user = session.exec(statement).first()
+
+        return user
+    
+    def get_users(
+        self,
+        session: Session
+    ):
+        stmt = select(User)
+        users = session.exec(stmt).all()
+
+        return users
+    
+    ######################## UPDATE ##########################
+
+    def update_user(
+        self,
+        user_id: str,
+        user_data: UserUpdate,
+        session: Session
+    ):
+        
+        stmt = select(User).where(User.id == user_id)
+        user = session.exec(stmt).first()
+
+        if user is None:
+            return
+        
+        data = user_data.model_dump(exclude_none=True)
+        for key, value in data.items():
+            setattr(user, key, value)
+
+        session.add(user)
+        session.commit()
 
         return user

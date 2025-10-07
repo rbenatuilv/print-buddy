@@ -21,3 +21,15 @@ class UserRead(BaseModel):
     name: str
     surname: str
     balance: float
+
+
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    username: str | None = None
+    name: str | None = None
+    surname: str | None = None
+
+
+class UserChangePassword(BaseModel):
+    current_pwd: str
+    new_pwd: str

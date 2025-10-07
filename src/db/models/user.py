@@ -49,5 +49,8 @@ class User(SQLModel, table=True):
 
     updated_at: datetime = Field(
         default_factory=generate_time, 
-        nullable=False
+        nullable=False,
+        sa_column_kwargs={
+            "onupdate": generate_time
+        }
     )
