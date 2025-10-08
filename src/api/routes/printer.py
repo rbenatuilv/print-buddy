@@ -4,7 +4,7 @@ from ..dependencies.database import SessionDep
 from ..dependencies.token import TokenDep
 from ...db.crud.printer import PrinterService
 from ...db.crud.user import UserService
-from ...schemas.printer import PrinterRead, PrinterCreate
+from ...schemas.printer import PrinterRead, PrinterCreate, PrinterAdminUpdate
 
 
 printer_service = PrinterService()
@@ -47,7 +47,31 @@ def create_printer(
     return new_printer
 
 
-# @router.patch(
+@router.patch(
+    '/{name}',
+    response_model=PrinterRead,
+    status_code=status.HTTP_201_CREATED
+)
+def update_printer(
+    name: str,
+    printer_data: PrinterAdminUpdate,
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    is_admin = user_service.user_is_admin(user_id, session)
 
-# )
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized"
+        )
     
+    printer = printer_service.update_printer_admin(name, printer_data, session)
+    if printer is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Printer not found'
+        )
+    
+    return printer

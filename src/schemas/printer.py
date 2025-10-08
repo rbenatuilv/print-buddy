@@ -27,6 +27,6 @@ class PrinterRead(BaseModel):
 
 
 class PrinterAdminUpdate(BaseModel):
-    price_per_page_bw: float
-    admits_color: bool
-    price_per_page_color: float
+    price_per_page_bw: float | None = None
+    admits_color: bool | None = None
+    price_per_page_color: float | None = None

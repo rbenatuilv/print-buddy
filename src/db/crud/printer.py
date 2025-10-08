@@ -1,11 +1,14 @@
 from sqlmodel import Session, select
 
 from ..models.printer import Printer
-from ...schemas.printer import PrinterCreate, PrinterCUPSUpdate
+from ...schemas.printer import PrinterCreate, PrinterCUPSUpdate, PrinterAdminUpdate
 from ...core.utils import generate_time
 
 
 class PrinterService:
+
+
+    ################### CREATE #######################
 
     def create_printer(
         self, 
@@ -18,7 +21,17 @@ class PrinterService:
         session.commit()
 
         return printer
+
+    ##################### READ #########################
     
+    def get_all_printers(self, session: Session):
+        stmt = select(Printer)
+        printers = session.exec(stmt).all()
+
+        return printers
+    
+    ##################### UPDATE #########################
+
     def update_printer_CUPS(
         self,
         printer_update: PrinterCUPSUpdate,
@@ -39,11 +52,21 @@ class PrinterService:
         session.commit()
         return printer
     
-    def get_all_printers(self, session: Session):
-        stmt = select(Printer)
-        printers = session.exec(stmt).all()
+    def update_printer_admin(
+        self,
+        name: str,
+        printer_data: PrinterAdminUpdate,
+        session: Session
+    ):
+        
+        stmt = select(Printer).where(Printer.name == name)
+        printer = session.exec(stmt).first()
 
-        return printers
+        if printer is None:
+            return None
+        
+        data = printer_data.model_dump(exclude_none=True)
+        for key, val in data.items():
+            setattr(printer, key, val)
 
-
-
+        return printer
