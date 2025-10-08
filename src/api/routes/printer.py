@@ -47,6 +47,26 @@ def create_printer(
     return new_printer
 
 
+@router.get(
+    '/{name}',
+    response_model=PrinterRead,
+    status_code=status.HTTP_200_OK
+)
+def get_printer_by_name(
+    name: str,
+    session: SessionDep
+):
+    
+    printer = printer_service.get_printer_by_name(name, session)
+    if printer is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Printer not found'
+        )
+    
+    return printer
+
+
 @router.patch(
     '/{name}',
     response_model=PrinterRead,
@@ -72,6 +92,34 @@ def update_printer(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Printer not found'
+        )
+    
+    return printer
+
+
+@router.delete(
+    '/{name}',
+    response_model=PrinterRead,
+    status_code=status.HTTP_200_OK
+)
+def delete_printer(
+    name: str,
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    is_admin = user_service.user_is_admin(user_id, session)
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized"
+        )
+    
+    printer = printer_service.delete_printer(name, session)
+    if printer is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Printer not found"
         )
     
     return printer

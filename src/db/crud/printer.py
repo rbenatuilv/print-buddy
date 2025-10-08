@@ -30,6 +30,16 @@ class PrinterService:
 
         return printers
     
+    def get_printer_by_name(
+        self,
+        name: str,
+        session: Session
+    ):
+        stmt = select(Printer).where(Printer.name == name)
+        printer = session.exec(stmt).first()
+        
+        return printer
+    
     ##################### UPDATE #########################
 
     def update_printer_CUPS(
@@ -68,5 +78,25 @@ class PrinterService:
         data = printer_data.model_dump(exclude_none=True)
         for key, val in data.items():
             setattr(printer, key, val)
+
+        session.commit()
+        return printer
+
+    ##################### DELETE #########################
+
+    def delete_printer(
+        self,
+        name: str,
+        session: Session
+    ):
+        
+        stmt = select(Printer).where(Printer.name == name)
+        printer = session.exec(stmt).first()
+
+        if printer is None:
+            return None
+        
+        session.delete(printer)
+        session.commit()
 
         return printer
