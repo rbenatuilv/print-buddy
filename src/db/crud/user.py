@@ -108,3 +108,24 @@ class UserService:
         session.commit()
 
         return user
+    
+    ######################## DELETE ##########################
+
+    def delete_user(
+        self,
+        id: str,
+        session: Session
+    ):
+        stmt = select(User).where(User.id == id)
+        user = session.exec(stmt).first()
+
+        if user is None:
+            return None
+        
+        session.delete(user)
+        session.commit()
+        return user
+        
+
+
+

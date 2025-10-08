@@ -101,3 +101,81 @@ def get_users(
     users = user_service.get_users(session)
 
     return users
+
+
+@router.patch(
+    '/{id}',
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED
+)
+def update_user(
+    id: str,
+    user_data: UserUpdate,
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    is_admin = user_service.user_is_admin(user_id, session)
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='User not authorized'
+        )
+    
+    if user_data.email is not None:
+        email_exists = user_service.email_exists(user_data.email, session)
+
+        if email_exists:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail='Email already exists'
+            )
+        
+    if user_data.username is not None:
+        username_exists = user_service.username_exists(user_data.username, session)
+
+        if username_exists:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail='Username already exists'
+            )
+        
+    user = user_service.update_user(id, user_data, session)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found'
+        )
+    
+    return user
+
+
+@router.delete(
+    '/{id}',
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK
+)
+def delete_user(
+    id: str,
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    is_admin = user_service.user_is_admin(user_id, session)
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized"
+        )
+    
+    user_delete = user_service.delete_user(id, session)
+    if user_delete is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found'
+        )
+    
+    return user_delete
