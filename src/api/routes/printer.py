@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException
 
 from ..dependencies.database import SessionDep
-from ..dependencies.token import TokenDep
+from ..dependencies.token import TokenDep, AdminTokenDep
 from ...db.crud.printer import PrinterService
 from ...db.crud.user import UserService
 from ...schemas.printer import PrinterRead, PrinterCreate, PrinterAdminUpdate
@@ -32,17 +32,9 @@ def get_printers(
 )
 def create_printer(
     printer_data: PrinterCreate,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='User not authorized'
-        )
-
     new_printer = printer_service.create_printer(printer_data, session)
     return new_printer
 
@@ -75,18 +67,9 @@ def get_printer_by_name(
 def update_printer(
     name: str,
     printer_data: PrinterAdminUpdate,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized"
-        )
-    
     printer = printer_service.update_printer_admin(name, printer_data, session)
     if printer is None:
         raise HTTPException(
@@ -104,16 +87,9 @@ def update_printer(
 )
 def delete_printer(
     name: str,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized"
-        )
     
     printer = printer_service.delete_printer(name, session)
     if printer is None:

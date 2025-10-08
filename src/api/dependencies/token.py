@@ -1,12 +1,17 @@
 from fastapi.security import HTTPBearer
 from fastapi.exceptions import HTTPException
-from fastapi import status
+from fastapi import status, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 from fastapi import Request, Depends
 from typing import Annotated
 
+from sqlmodel import Session
+from ...db.main import engine
 from ...core.security import Security
+from ...db.crud.user import UserService 
 
+
+user_service = UserService()
 
 class TokenBearer(HTTPBearer):
 
@@ -31,6 +36,33 @@ class TokenBearer(HTTPBearer):
             )
     
 
+class AdminTokenBearer(TokenBearer):
+
+    def __init__(self, auto_error: bool = True):
+        super().__init__(auto_error=auto_error)
+
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
+        creds = await super().__call__(request)
+        if creds is None:
+            return creds
+
+        user_id = creds.credentials
+
+        with Session(engine) as session:
+            is_admin = user_service.user_is_admin(user_id, session)
+            if not is_admin:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User not authorized"
+                )
+            
+        return creds
+
+
 TokenDep = Annotated[
     HTTPAuthorizationCredentials, Depends(TokenBearer())
+]
+
+AdminTokenDep = Annotated[
+    HTTPAuthorizationCredentials, Depends(AdminTokenBearer())
 ]

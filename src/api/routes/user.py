@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, HTTPException
 
-from ..dependencies.token import TokenDep
+from ..dependencies.token import TokenDep, AdminTokenDep
 from ..dependencies.database import SessionDep
 
 from ...schemas.user import UserRead, UserUpdate
@@ -86,20 +86,11 @@ def update_me(
     status_code=status.HTTP_200_OK
 )
 def get_users(
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-
-    is_admin = user_service.user_is_admin(user_id, session)
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='User not authorized'
-        )
     
     users = user_service.get_users(session)
-
     return users
 
 
@@ -110,16 +101,9 @@ def get_users(
 )
 def get_user_by_id(
     id: str,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized"
-        )
     
     user = user_service.get_user_by_id(id, session)
     if user is None:
@@ -139,17 +123,9 @@ def get_user_by_id(
 def update_user(
     id: str,
     user_data: UserUpdate,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='User not authorized'
-        )
     
     if user_data.email is not None:
         email_exists = user_service.email_exists(user_data.email, session)
@@ -187,17 +163,9 @@ def update_user(
 )
 def delete_user(
     id: str,
-    token: TokenDep,
+    token: AdminTokenDep,
     session: SessionDep
 ):
-    user_id = token.credentials
-    is_admin = user_service.user_is_admin(user_id, session)
-
-    if not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized"
-        )
     
     user_delete = user_service.delete_user(id, session)
     if user_delete is None:
