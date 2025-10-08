@@ -103,6 +103,34 @@ def get_users(
     return users
 
 
+@router.get(
+    '/{id}',
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK
+)
+def get_user_by_id(
+    id: str,
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    is_admin = user_service.user_is_admin(user_id, session)
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized"
+        )
+    
+    user = user_service.get_user_by_id(id, session)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return user
+
+
 @router.patch(
     '/{id}',
     response_model=UserRead,

@@ -104,7 +104,6 @@ class UserService:
         for key, value in data.items():
             setattr(user, key, value)
 
-        session.add(user)
         session.commit()
 
         return user
