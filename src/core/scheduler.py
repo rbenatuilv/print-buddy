@@ -5,7 +5,7 @@ import json
 from .cups import CUPSManager
 from ..db.main import engine
 from ..db.crud.printer import PrinterService
-from ..schemas.printer import PrinterStatusUpdate
+from ..schemas.printer import PrinterCUPSUpdate
 
 
 printer_service = PrinterService()
@@ -44,8 +44,8 @@ class Scheduler(AsyncIOScheduler):
         with Session(engine) as session:
             for data in printers_data:
 
-                print_update = PrinterStatusUpdate(**data)
-                printer_service.update_printer_status(
+                print_update = PrinterCUPSUpdate(**data)
+                printer_service.update_printer_CUPS(
                     printer_update=print_update,
                     session=session
                 )

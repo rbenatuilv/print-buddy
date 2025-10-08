@@ -10,7 +10,7 @@ class PrinterCreate(BaseModel):
     status: PrinterStatus
 
 
-class PrinterStatusUpdate(BaseModel):
+class PrinterCUPSUpdate(BaseModel):
     name: str
     location: str
     status: PrinterStatus
@@ -20,5 +20,13 @@ class PrinterRead(BaseModel):
     name: str
     location: str
     status: PrinterStatus
-    price_per_page: float
+    price_per_page_bw: float
+    admits_color: bool
+    price_per_page_color: float
     updated_at: datetime
+
+
+class PrinterAdminUpdate(BaseModel):
+    price_per_page_bw: float
+    admits_color: bool
+    price_per_page_color: float

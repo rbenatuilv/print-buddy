@@ -45,4 +45,9 @@ def create_printer(
 
     new_printer = printer_service.create_printer(printer_data, session)
     return new_printer
+
+
+# @router.patch(
+
+# )
     

@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
 from ..models.printer import Printer
-from ...schemas.printer import PrinterCreate, PrinterStatusUpdate
+from ...schemas.printer import PrinterCreate, PrinterCUPSUpdate
 from ...core.utils import generate_time
 
 
@@ -19,9 +19,9 @@ class PrinterService:
 
         return printer
     
-    def update_printer_status(
+    def update_printer_CUPS(
         self,
-        printer_update: PrinterStatusUpdate,
+        printer_update: PrinterCUPSUpdate,
         session: Session
     ):
         name = printer_update.name
