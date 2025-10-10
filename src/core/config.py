@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_NAME: str
 
+    MAX_FILE_SIZE_MB: int
+    UPLOAD_PATH: str
+
     @computed_field()
     @property
     def DB_PATH(self) -> str:
