@@ -32,3 +32,24 @@ class CUPSManager:
             })
         
         return result
+
+    def print_file(
+        self,
+        printer_name: str,
+        file_path: str,
+        options: dict
+    ) -> str:
+        
+        if self.conn is None:
+            return ""
+        
+        try: 
+            job_id = self.conn.printFile(
+                printer_name=printer_name,
+                file_path=file_path,
+                options=options
+            )
+            return job_id
+        
+        except cups.IPPError:
+            return ""

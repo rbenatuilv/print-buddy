@@ -64,7 +64,8 @@ def upload_file(
         filename=file.filename,  # type: ignore
         filepath=path.as_posix(),
         size_bytes=size,
-        mime_type=file.content_type  # type: ignore
+        mime_type=file.content_type,  # type: ignore
+        pages=fm.get_total_pages(path)
     )
 
     new_file = file_service.create_file(

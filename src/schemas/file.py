@@ -8,6 +8,7 @@ class FileCreate(BaseModel):
     filepath: str
     size_bytes: int
     mime_type: str
+    pages: int
 
 
 class FileRead(BaseModel):
@@ -15,4 +16,5 @@ class FileRead(BaseModel):
     filename: str
     size_bytes: int
     mime_type: str
+    pages: int
     uploaded_at: datetime

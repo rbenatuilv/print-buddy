@@ -1,5 +1,6 @@
 from fastapi import UploadFile
 from pathlib import Path
+from PyPDF2 import PdfReader
 
 from .utils import generate_time
 from .config import settings
@@ -56,6 +57,12 @@ class FileManager:
                 buffer.write(chunk)
 
         return total_bytes
+    
+    def get_total_pages(self, path: Path) -> int:
+        ext = path.suffix.lower()
+        if ext == ".pdf":
+            return len(PdfReader(path.as_posix()).pages)
+        return 1
     
     def delete_file(self, path: Path) -> bool:
         if not path.exists():

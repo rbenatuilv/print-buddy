@@ -23,6 +23,8 @@ class File(SQLModel, table=True):
     size_bytes: int = Field(nullable=False, gt=0)
     mime_type: str = Field(nullable=False)
 
+    pages: int = Field(nullable=False, gt=0)
+
     uploaded_at: datetime = Field(
         default_factory=generate_time,
         nullable=False

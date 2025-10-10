@@ -28,6 +28,14 @@ class FileService:
 
     ################## READ ####################
 
+    def get_file_by_id(
+        self,
+        file_id: str,
+        session: Session
+    ):
+        file = session.get(File, file_id)
+        return file
+
     def get_files_by_user_id(
         self,
         id: str,

@@ -108,6 +108,21 @@ class UserService:
 
         return user
     
+    def discount_credit(self, user_id: str, cost: float, session: Session):
+        stmt = select(User).where(User.id == user_id)
+        user = session.exec(stmt).first()
+
+        if user is None:
+            return False
+        
+        if user.balance < cost:
+            return False
+        
+        user.balance -= cost
+        session.commit()
+
+        return True
+    
     ######################## DELETE ##########################
 
     def delete_user(

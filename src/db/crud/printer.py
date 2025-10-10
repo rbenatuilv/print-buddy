@@ -40,6 +40,15 @@ class PrinterService:
         
         return printer
     
+    def calculate_cost(
+        self,
+        printer_name: str,
+        pages: int,
+        color: bool,
+        session: Session
+    ):
+        pass
+    
     ##################### UPDATE #########################
 
     def update_printer_CUPS(

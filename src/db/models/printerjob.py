@@ -33,7 +33,9 @@ class PrintJob(SQLModel, table=True):
 
     file_size: int = Field(nullable=True)
 
-    pages: int = Field(nullable=False, default=0)
+    pages: int = Field(nullable=False, default=1)
+
+    copies: int = Field(nullable=False, default=1)
 
     color: bool = Field(nullable=False, default=False)
 
@@ -50,5 +52,3 @@ class PrintJob(SQLModel, table=True):
     )
 
     completed_at: datetime = Field(nullable=True)
-
-
