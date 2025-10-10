@@ -21,9 +21,17 @@ class PrintJob(SQLModel, table=True):
         primary_key=True
     )
 
-    user_id: uuid.UUID = Field(foreign_key="user.id")
+    cups_id: str = Field(nullable=False, unique=True)
 
-    printer_id: uuid.UUID = Field(foreign_key="printer.id")
+    user_id: uuid.UUID = Field(foreign_key="user.id", ondelete="CASCADE")
+
+    printer_id: uuid.UUID = Field(foreign_key="printer.id", ondelete="CASCADE")
+
+    file_id: uuid.UUID = Field(foreign_key="file.id", ondelete="SET NULL", nullable=True)
+
+    file_name: str = Field(nullable=True)
+
+    file_size: int = Field(nullable=True)
 
     pages: int = Field(nullable=False, default=0)
 
