@@ -18,15 +18,7 @@ class PrintJobService:
         
         new_printjob = PrintJob(
             cups_id=cups_id,
-            user_id=uuid.UUID(printjob.user_id),
-            printer_id=printjob.printer.id,
-            printer_name=printjob.printer.name,
-            file_id=printjob.file.id,
-            file_name=printjob.file.filename,
-            file_size=printjob.file.size_bytes,
-            pages=printjob.file.pages,
-            copies=printjob.print_options.copies,
-            color=printjob.print_options.color
+            **printjob.dump_on_DB
         )
 
         session.add(new_printjob)

@@ -37,8 +37,6 @@ class PrintJob(SQLModel, table=True):
 
     pages: int = Field(nullable=False, default=1)
 
-    copies: int = Field(nullable=False, default=1)
-
     color: bool = Field(nullable=False, default=False)
 
     status: JobStatus = Field(

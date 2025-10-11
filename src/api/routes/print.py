@@ -6,10 +6,7 @@ from ..dependencies.database import SessionDep
 from ...schemas.print import PrintOptions
 from ...schemas.printjob import PrintJobCreate, PrintJobRead
 
-from ...db.crud.user import UserService
-from ...db.crud.printer import PrinterService
-from ...db.crud.file import FileService
-from ...core.cups_manager import CUPSManager
+from ...core.utils import count_pages_in_range
 from ...core.print_assistant import PrintAssistant
 
 
@@ -48,7 +45,18 @@ def print_file(
 
     # CALCULATE PRICE
     price_per_page = printer.price_per_page_color if color else printer.price_per_page_bw
-    total_price = file.pages * print_options.copies * price_per_page
+    if print_options.page_ranges == "all":
+        pages = file.pages
+    else:
+        pages = count_pages_in_range(print_options.page_ranges, file.pages)
+
+    if pages == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid format of page-ranges"
+        )
+
+    total_price = pages * print_options.copies * price_per_page
 
     # VERIFY ENOUGH USER CREDITS
     enough_credits = print_assistant.check_enough_credit(user_id, total_price, session)
@@ -64,7 +72,8 @@ def print_file(
         printer=printer,
         file=file,
         print_options=print_options,
-        cost=total_price
+        cost=total_price,
+        pages=pages
     )
 
     pj = print_assistant.send_print_job(

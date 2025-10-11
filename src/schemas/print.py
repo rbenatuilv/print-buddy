@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, field_validator
 from enum import Enum
+
+from ..core.utils import is_valid_page_range
 
 
 class SidesOption(str, Enum):
@@ -14,16 +16,22 @@ class PrintOptions(BaseModel):
     sides: SidesOption = SidesOption.ONE_SIDED
     fit_to_page: bool = True
     color: bool = False
+    page_ranges: str = "all"
 
     @property
     def cups_options(self) -> dict:
         """
         Convert Pydantic model fields into CUPS options dictionary.
         """
-        return {
+        options = {
             "copies": str(self.copies),
             "media": self.media,
             "sides": self.sides,
             "fit-to-page": "true" if self.fit_to_page else "false",
             "print-color-mode": "color" if self.color else "monochrome",
         }
+
+        if self.page_ranges != "all":
+            options["page-ranges"] = self.page_ranges
+
+        return options
