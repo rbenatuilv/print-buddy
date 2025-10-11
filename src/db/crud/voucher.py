@@ -81,7 +81,17 @@ class VoucherService:
 
         session.commit()
         return True
+    
+    def revoke_voucher(
+        self, 
+        code: str, 
+        session: Session
+    ):
         
+        voucher = self.get_voucher_by_code(code, session)
+        if voucher is None:
+            return None
         
-
-        
+        voucher.status = VoucherStatus.CANCELLED
+        session.commit()
+        return voucher

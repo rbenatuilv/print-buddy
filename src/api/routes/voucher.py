@@ -4,12 +4,13 @@ from ..dependencies.token import TokenDep, AdminTokenDep
 from ..dependencies.database import SessionDep
 
 from ...schemas.voucher import VoucherRead, RedeemSuccess
-
+from ...db.crud.voucher import VoucherService
 from ...core.voucher_assistant import VoucherAssistant
 
 
 router = APIRouter()
 voucher_assistant = VoucherAssistant()
+voucher_service = VoucherService()
 
 
 @router.post(
@@ -55,3 +56,23 @@ def redeem_voucher(
     )
     
     return {"success": success}
+
+
+@router.post(
+    "/revoke/{code}",
+    response_model=VoucherRead,
+    status_code=status.HTTP_200_OK
+)
+def revoke_voucher(
+    code: str,
+    token: AdminTokenDep,
+    session: SessionDep
+):
+    voucher = voucher_service.revoke_voucher(code, session)
+    if voucher is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Voucher not found"
+        )
+    
+    return voucher
