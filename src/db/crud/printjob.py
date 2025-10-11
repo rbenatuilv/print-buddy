@@ -50,13 +50,13 @@ class PrintJobService:
         job_id: str,
         new_status: JobStatus,
         session: Session
-    ):
+    ) -> PrintJob | None:
         
         stmt = select(PrintJob).where(PrintJob.id == job_id)
         job = session.exec(stmt).first()
 
         if job is None:
-            return None
+            return job
 
         job.status = new_status
 

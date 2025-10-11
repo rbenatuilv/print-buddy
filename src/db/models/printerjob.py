@@ -23,6 +23,11 @@ TRANSIT_STATUS = [
     JobStatus.STOPPED
 ]
 
+ERROR_STATUS = [
+    JobStatus.ABORTED,
+    JobStatus.CANCELLED
+]
+
 
 class PrintJob(SQLModel, table=True):
 

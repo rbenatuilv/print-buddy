@@ -8,12 +8,16 @@ from ..db.main import engine
 
 from ..db.crud.printer import PrinterService
 from ..db.crud.printjob import PrintJobService
+from ..db.crud.user import UserService
 
+from ..db.models.printerjob import ERROR_STATUS
 from ..schemas.printer import PrinterCUPSUpdate
 
 
 printer_service = PrinterService()
 pj_service = PrintJobService()
+user_service = UserService()
+
 cups_mgr = CUPSManager()
 
 
@@ -70,8 +74,9 @@ class Scheduler(AsyncIOScheduler):
                     continue
 
                 if status != new_status:
-                    pj_service.update_job_status(str(job_id), new_status, session)
-                        
+                    job = pj_service.update_job_status(str(job_id), new_status, session)
+                    if job is not None and new_status in ERROR_STATUS:
+                        user_service.add_credit(str(job.user_id), job.cost, session)
 
     async def update_printers(self):
         loop = asyncio.get_running_loop()
