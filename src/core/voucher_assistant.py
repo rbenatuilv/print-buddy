@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlmodel import Session
+from datetime import timezone
 import uuid
 
 from ..db.crud.voucher import VoucherService
@@ -81,7 +82,7 @@ class VoucherAssistant:
             return False
         
         now = generate_time()
-        delta = now - voucher.created_at
+        delta = now - voucher.created_at.replace(tzinfo=timezone.utc)
 
         if delta.total_seconds() > settings.EXP_TIME_VOUCHER_MIN * 60:
             voucher_service.expire_voucher(code, session)

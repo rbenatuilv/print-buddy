@@ -41,7 +41,7 @@ class VoucherService:
         stmt = select(Voucher.code).where(Voucher.code == code)
         old_code = session.exec(stmt).first()
 
-        return old_code is None
+        return old_code is not None
     
     def get_amount_by_code(
         self,
