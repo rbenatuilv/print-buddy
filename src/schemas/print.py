@@ -8,10 +8,6 @@ class SidesOption(str, Enum):
     TWO_SIDED_SHORT = "two-sided-shot-edge"
 
 
-class PrintJobResponse(BaseModel):
-    success: bool
-
-
 class PrintOptions(BaseModel):
     copies: int = 1
     media: str = "A4"

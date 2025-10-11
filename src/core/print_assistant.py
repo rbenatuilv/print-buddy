@@ -1,15 +1,14 @@
 from fastapi import status, HTTPException
 from sqlmodel import Session
-import uuid
 
 from ..db.crud.user import UserService
 from ..db.crud.printer import PrinterService
 from ..db.crud.file import FileService
 from ..db.crud.printjob import PrintJobService
 
-from ..schemas.print import PrintOptions
 from ..schemas.printjob import PrintJobCreate
-from .cups import CUPSManager
+
+from .cups_manager import CUPSManager
 
 
 user_service = UserService()
@@ -36,7 +35,7 @@ class PrintAssistant:
         if file is not None:
             check = str(file.user_id) == user_id
 
-        if not check:
+        if not check or file is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="File not found or not from user"
@@ -61,29 +60,6 @@ class PrintAssistant:
         
         return printer
     
-    def calculate_price(
-        self,
-        printer_name: str,
-        color: bool,
-        pages: int,
-        session: Session
-    ):
-        
-        printer = self.get_printer(printer_name, session)
-
-        if color and not printer.admits_color:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Printer does not admit color printing"
-            )
-        
-        if color:
-            price = printer.price_per_page_color * pages
-        else:
-            price = printer.price_per_page_bw * pages
-
-        return price
-    
     def check_enough_credit(
         self, 
         user_id: str,
@@ -91,87 +67,62 @@ class PrintAssistant:
         session: Session
     ):
         
-        user = user_service.get_user_by_id(user_id, session)
-        if user is None:
+        user_balance = user_service.get_user_balance(user_id, session)
+        if user_balance is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
 
-        return user.balance >= cost
+        return user_balance >= cost
     
-        
-    def send_print_job(
+    def discount_credit(
         self,
         user_id: str,
-        file_id: str,
-        printer_name: str,
-        print_options: PrintOptions,
+        cost: float,
         session: Session
     ):
         
-        file = self.get_file_to_print(user_id, file_id, session)
-        
-        pages = print_options.copies * file.pages  # type: ignore
-        color = print_options.color
+        success = user_service.discount_credit(user_id, cost, session)
+        if not success:
+            print("WARNING: An error occurred while discounting user balance")
 
-        cost = self.calculate_price(
-            printer_name, color, pages, session
+        return success
+      
+    def send_print_job(
+        self,
+        printjob: PrintJobCreate,
+        session: Session
+    ):
+        printer_name = printjob.printer.name
+        filepath = printjob.file.filepath
+        print_options = printjob.print_options
+
+        username = user_service.get_username_by_id(printjob.user_id, session)
+
+        cups_id = cups_mgr.print_file(
+            printer_name=printer_name,
+            file_path=filepath,
+            title=f"{username} job in {printer_name}",
+            options=print_options.cups_options
         )
 
-        enough_credit = self.check_enough_credit(user_id, cost, session)
-
-        if not enough_credit:
+        if not cups_id:
             raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="Not enough credit"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to send print job to CUPS service"
             )
-        
-        options = print_options.cups_options
-        
-        cups_job_id = cups_mgr.print_file(
-            printer_name, 
-            file.filepath,  # type: ignore
-            options
+    
+        pj = pj_service.create_job(
+            cups_id=cups_id,
+            printjob=printjob,
+            session=session
         )
 
-        if not cups_job_id:
-            raise HTTPException(
-                status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Failed to send job to printer"
-            )
-        
-        user_service.discount_credit(user_id, cost, session)
-
-        printer = self.get_printer(printer_name, session)
-
-        pj = PrintJobCreate(
-            cups_id=cups_job_id,
-            user_id=uuid.UUID(user_id),
-            printer_id=printer.id,
-            file_id=file_id,  # type: ignore
-            file_name=file.filename,  # type: ignore
-            file_size=file.size_bytes,  # type: ignore
-            pages=pages,
-            copies=print_options.copies,
-            color=print_options.color,
-            cost=cost
+        self.discount_credit(
+            printjob.user_id,
+            printjob.cost,
+            session
         )
 
-
-        pj_service.create_job(
-            pj, session
-        )
-
-        return cups_job_id
-
-
-        
-
-
-        
-
-
-
-
-        
+        return pj

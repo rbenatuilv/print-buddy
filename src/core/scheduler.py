@@ -1,8 +1,9 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlmodel import Session, select
 import json
+import asyncio
 
-from .cups import CUPSManager
+from .cups_manager import CUPSManager
 from ..db.main import engine
 from ..db.crud.printer import PrinterService
 from ..schemas.printer import PrinterCUPSUpdate
@@ -35,7 +36,7 @@ class Scheduler(AsyncIOScheduler):
 
         return False
 
-    def update_printers(self):
+    def update_printers_sync(self):
         printers_data = cups_mgr.get_printers()
 
         if not self.check_printer_changes(printers_data):
@@ -49,6 +50,10 @@ class Scheduler(AsyncIOScheduler):
                     printer_update=print_update,
                     session=session
                 )
+
+    async def update_printers(self):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.update_printers_sync)
 
     def start(self, *args, **kwargs):
         self.add_job(self.update_printers, "interval", seconds=60)

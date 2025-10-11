@@ -1,17 +1,25 @@
 from pydantic import BaseModel
-import uuid
+from datetime import datetime
+
+from ..db.models.file import File
+from ..db.models.printer import Printer
+
+from .print import PrintOptions
 
 
 class PrintJobCreate(BaseModel):
+    user_id: str
+    printer: Printer
+    file: File
+    print_options: PrintOptions
+    cost: float
 
-    cups_id: str
-    user_id: uuid.UUID
-    printer_id: uuid.UUID
-    file_id: uuid.UUID
+
+class PrintJobRead(BaseModel):
+    printer_name: str
     file_name: str
-    file_size: int
     pages: int
     copies: int
     color: bool
     cost: float
-
+    created_at: datetime

@@ -66,6 +66,12 @@ class UserService:
 
         return user
     
+    def get_username_by_id(self, user_id: str, session: Session):
+        stmt = select(User.username).where(User.id == user_id)
+        username = session.exec(stmt).first()
+
+        return username
+    
     def get_user_by_id(
         self,
         id: str,
@@ -84,6 +90,15 @@ class UserService:
         users = session.exec(stmt).all()
 
         return users
+    
+    def get_user_balance(
+        self,
+        user_id: str,
+        session: Session
+    ):
+        stmt = select(User.balance).where(User.id == user_id)
+        balance = session.exec(stmt).first()
+        return balance
     
     ######################## UPDATE ##########################
 

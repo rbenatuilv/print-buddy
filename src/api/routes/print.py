@@ -3,11 +3,13 @@ from fastapi import APIRouter, status, HTTPException
 from ..dependencies.token import TokenDep
 from ..dependencies.database import SessionDep
 
-from ...schemas.print import PrintJobResponse, PrintOptions
+from ...schemas.print import PrintOptions
+from ...schemas.printjob import PrintJobCreate, PrintJobRead
+
 from ...db.crud.user import UserService
 from ...db.crud.printer import PrinterService
 from ...db.crud.file import FileService
-from ...core.cups import CUPSManager
+from ...core.cups_manager import CUPSManager
 from ...core.print_assistant import PrintAssistant
 
 
@@ -18,7 +20,7 @@ print_assistant = PrintAssistant()
 
 @router.post(
     '/{printer_name}/{file_id}',
-    response_model=PrintJobResponse,
+    response_model=PrintJobRead,
     status_code=status.HTTP_200_OK
 )
 def print_file(
@@ -30,16 +32,44 @@ def print_file(
 ):
     user_id = token.credentials
 
-    cups_job_id = print_assistant.send_print_job(
-        user_id, file_id, printer_name, print_options, session
+    # VERIFY PRINTER'S EXISTENCE
+    printer = print_assistant.get_printer(printer_name, session)
+
+    # VERIFY FILE'S EXISTENCE AND BELONGING
+    file = print_assistant.get_file_to_print(user_id, file_id, session)
+
+    # VERIFY PRINT OPTIONS COMPLIANCE (COLOR)
+    color = print_options.color
+    if color and not printer.admits_color:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Printer does not admit color"
+        )
+
+    # CALCULATE PRICE
+    price_per_page = printer.price_per_page_color if color else printer.price_per_page_bw
+    total_price = file.pages * print_options.copies * price_per_page
+
+    # VERIFY ENOUGH USER CREDITS
+    enough_credits = print_assistant.check_enough_credit(user_id, total_price, session)
+    if not enough_credits:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Insufficient balance to print"
+        )
+
+    # SEND JOB AND DISCOUNT IF JOB SENT
+    pj_create = PrintJobCreate(
+        user_id=user_id,
+        printer=printer,
+        file=file,
+        print_options=print_options,
+        cost=total_price
     )
 
-    
+    pj = print_assistant.send_print_job(
+        printjob=pj_create,
+        session=session
+    )
 
-
-    
-
-
-
-
-
+    return pj

@@ -27,6 +27,8 @@ class PrintJob(SQLModel, table=True):
 
     printer_id: uuid.UUID = Field(foreign_key="printer.id", ondelete="CASCADE")
 
+    printer_name: str = Field(nullable=False)
+
     file_id: uuid.UUID = Field(foreign_key="file.id", ondelete="SET NULL", nullable=True)
 
     file_name: str = Field(nullable=True)
@@ -51,4 +53,4 @@ class PrintJob(SQLModel, table=True):
         nullable=False
     )
 
-    completed_at: datetime = Field(nullable=True)
+    completed_at: datetime = Field(nullable=True, default=None)

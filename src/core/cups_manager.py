@@ -37,6 +37,7 @@ class CUPSManager:
         self,
         printer_name: str,
         file_path: str,
+        title:str,
         options: dict
     ) -> str:
         
@@ -45,11 +46,17 @@ class CUPSManager:
         
         try: 
             job_id = self.conn.printFile(
-                printer_name=printer_name,
-                file_path=file_path,
+                printer=printer_name,
+                filename=file_path,
+                title=title,
                 options=options
             )
-            return job_id
+            return str(job_id)
         
         except cups.IPPError:
             return ""
+        
+        except Exception as e:
+            print(e)
+            return ""
+    
