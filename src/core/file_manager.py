@@ -1,6 +1,7 @@
 from fastapi import UploadFile
 from pathlib import Path
 from PyPDF2 import PdfReader
+import shutil
 
 from .utils import generate_time
 from .config import settings
@@ -73,3 +74,11 @@ class FileManager:
             return True
         except Exception as e:
             return False
+        
+    def delete_directory(self, path: Path) -> bool:
+        if path.exists() and path.is_dir():
+            shutil.rmtree(path)
+            return True
+        return False
+        
+

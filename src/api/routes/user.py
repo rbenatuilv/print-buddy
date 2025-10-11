@@ -1,14 +1,19 @@
 from fastapi import APIRouter, status, HTTPException
+from pathlib import Path
 
 from ..dependencies.token import TokenDep, AdminTokenDep
 from ..dependencies.database import SessionDep
 
-from ...schemas.user import UserRead, UserUpdate
+from ...schemas.user import UserRead, UserUpdate, UserAdminRead
 from ...db.crud.user import UserService
+
+from ...core.file_manager import FileManager
+from ...core.config import settings
 
 
 router = APIRouter()
 user_service = UserService()
+fm = FileManager()
 
 
 @router.get(
@@ -82,7 +87,7 @@ def update_me(
 
 @router.get(
     '',
-    response_model=list[UserRead],
+    response_model=list[UserAdminRead],
     status_code=status.HTTP_200_OK
 )
 def get_users(
@@ -96,7 +101,7 @@ def get_users(
 
 @router.get(
     '/{id}',
-    response_model=UserRead,
+    response_model=UserAdminRead,
     status_code=status.HTTP_200_OK
 )
 def get_user_by_id(
@@ -117,7 +122,7 @@ def get_user_by_id(
 
 @router.patch(
     '/{id}',
-    response_model=UserRead,
+    response_model=UserAdminRead,
     status_code=status.HTTP_201_CREATED
 )
 def update_user(
@@ -158,7 +163,7 @@ def update_user(
 
 @router.delete(
     '/{id}',
-    response_model=UserRead,
+    response_model=UserAdminRead,
     status_code=status.HTTP_200_OK
 )
 def delete_user(
@@ -173,5 +178,8 @@ def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='User not found'
         )
+    
+    path = Path(settings.UPLOAD_PATH) / id
+    fm.delete_directory(path)
     
     return user_delete

@@ -23,6 +23,10 @@ class UserRead(BaseModel):
     balance: float
 
 
+class UserAdminRead(UserRead):
+    id: uuid.UUID
+
+
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
     username: str | None = None
