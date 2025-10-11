@@ -4,10 +4,12 @@ import uuid
 
 from ..db.crud.voucher import VoucherService
 from ..db.crud.user import UserService
+from ..db.models.voucher import VoucherStatus
+from ..core.config import settings
 
 from ..schemas.voucher import VoucherCreate, VoucherRedeem
 
-from ..core.utils import generate_code
+from ..core.utils import generate_code, generate_time
 
 
 voucher_service = VoucherService()
@@ -66,6 +68,27 @@ class VoucherAssistant:
         )
 
         return voucher
+    
+    def voucher_redeemable(self, code, session):
+        voucher = voucher_service.get_voucher_by_code(code, session)
+        if voucher is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Voucher not found"
+            )
+        
+        if voucher.status != VoucherStatus.ACTIVE:
+            return False
+        
+        now = generate_time()
+        delta = now - voucher.created_at
+
+        if delta.total_seconds() > settings.EXP_TIME_VOUCHER_MIN * 60:
+            voucher_service.expire_voucher(code, session)
+
+            return False
+        
+        return True
 
     def redeem_voucher(
         self,
@@ -74,8 +97,8 @@ class VoucherAssistant:
         session: Session
     ) -> bool:
         
-        exists = voucher_service.code_exists(code, session)
-        if not exists:
+        voucher = voucher_service.get_voucher_by_code(code, session)
+        if voucher is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Voucher not found"
@@ -88,14 +111,27 @@ class VoucherAssistant:
                 detail="User not found"
             )
         
-        voucher_redeem = VoucherRedeem(
+        amount = voucher.amount
+        success = user_service.add_credit(user_id, amount, session)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to recharge user balance, try again"
+            )
+        
+        voucher_data = VoucherRedeem(
             code=code,
             redeemed_by_id=uuid.UUID(user_id),
             redeemed_by_name=username
         )
-
-        success = voucher_service.redeem_voucher(
-            voucher_redeem, session
-        )
-
+        
+        success = voucher_service.redeem_voucher(voucher_data, session)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Voucher not found"
+            )
+        
         return success
+        

@@ -2,7 +2,6 @@ from sqlmodel import Session, select
 
 from ..models.voucher import Voucher, VoucherStatus
 from ...schemas.voucher import VoucherCreate, VoucherRedeem
-from ...core.config import settings
 from ...core.utils import generate_time
 
 
@@ -43,8 +42,26 @@ class VoucherService:
         old_code = session.exec(stmt).first()
 
         return old_code is None
+    
+    def get_amount_by_code(
+        self,
+        code: str,
+        session: Session
+    ):
+        stmt = select(Voucher.amount).where(Voucher.code == code)
+        amount = session.exec(stmt).first()
+        return amount
 
     ########################## UPDATE #########################
+
+    def expire_voucher(self, code: str, session: Session):
+        voucher = self.get_voucher_by_code(code, session)
+        if voucher is None:
+            return False
+        
+        voucher.status = VoucherStatus.EXPIRED
+        session.commit()
+        return True
 
     def redeem_voucher(
         self,
@@ -54,22 +71,9 @@ class VoucherService:
         
         code = voucher_data.code
         voucher = self.get_voucher_by_code(code, session)
-
         if voucher is None:
             return False
-        
-        if voucher.status != VoucherStatus.ACTIVE:
-            return False
-        
-        now = generate_time()
-        delta = now - voucher.created_at
 
-        if delta.total_seconds() > settings.EXP_TIME_VOUCHER_MIN * 60:
-            voucher.status = VoucherStatus.EXPIRED
-            session.commit()
-            
-            return False 
-        
         voucher.status = VoucherStatus.REDEEMED
         voucher.redeemed_by_id = voucher_data.redeemed_by_id
         voucher.redeemed_by_name = voucher_data.redeemed_by_name

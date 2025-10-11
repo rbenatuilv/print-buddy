@@ -138,6 +138,18 @@ class UserService:
 
         return True
     
+    def add_credit(self, user_id: str, amount: float, session: Session):
+        stmt = select(User).where(User.id == user_id)
+        user = session.exec(stmt).first()
+
+        if user is None:
+            return False
+        
+        user.balance += amount
+        session.commit()
+
+        return True
+    
     ######################## DELETE ##########################
 
     def delete_user(

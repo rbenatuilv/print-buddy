@@ -42,14 +42,16 @@ def redeem_voucher(
 ):
     
     user_id = token.credentials
+    
+    redeemable = voucher_assistant.voucher_redeemable(code, session)
+    if not redeemable:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Voucher not redeemable"
+        )
+    
     success = voucher_assistant.redeem_voucher(
         user_id, code, session
     )
-
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Voucher does not exist or is no lonnger valid"
-        )
     
     return {"success": success}
