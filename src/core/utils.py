@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 import re
+import string
+import secrets
 
 
 def generate_time() -> datetime:
@@ -39,6 +41,8 @@ def count_pages_in_range(page_range: str, total_pages: int | None = None) -> int
     return len(page_numbers)
 
 
-if __name__ == "__main__":
-    page_range = "1-9, 10"
-    print(count_pages_in_range(page_range, 10))
+ALPHABET_HUMAN = ''.join(c for c in (string.ascii_uppercase + string.ascii_lowercase + string.digits)
+                         if c not in "0Oo1Il")
+
+def generate_code(length: int = 8) -> str:
+    return ''.join(secrets.choice(ALPHABET_HUMAN) for _ in range(length))

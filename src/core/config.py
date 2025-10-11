@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int
     UPLOAD_PATH: str
 
+    EXP_TIME_VOUCHER_MIN: int
+
     @computed_field()
     @property
     def DB_PATH(self) -> str:

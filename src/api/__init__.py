@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from .routes import auth, user, printer, file, print
+from .routes import auth, user, printer, file, print, voucher
 
 
 router = APIRouter()
@@ -20,3 +20,4 @@ router.include_router(user.router, prefix="/users", tags=["users"])
 router.include_router(printer.router, prefix="/printers", tags=["printers"])
 router.include_router(file.router, prefix="/files", tags=["files"])
 router.include_router(print.router, prefix="/print", tags=["print"])
+router.include_router(voucher.router, prefix="/voucher", tags=["voucher"])
