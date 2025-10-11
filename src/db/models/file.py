@@ -29,9 +29,3 @@ class File(SQLModel, table=True):
         default_factory=generate_time,
         nullable=False
     )
-
-    printed: bool = Field(
-        nullable=False,
-        default=False
-    )
-
