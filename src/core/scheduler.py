@@ -5,11 +5,15 @@ import asyncio
 
 from .cups_manager import CUPSManager
 from ..db.main import engine
+
 from ..db.crud.printer import PrinterService
+from ..db.crud.printjob import PrintJobService
+
 from ..schemas.printer import PrinterCUPSUpdate
 
 
 printer_service = PrinterService()
+pj_service = PrintJobService()
 cups_mgr = CUPSManager()
 
 
@@ -51,10 +55,34 @@ class Scheduler(AsyncIOScheduler):
                     session=session
                 )
 
+    def update_jobs_sync(self):
+
+        with Session(engine) as session:
+            jobs_to_update = pj_service.get_transitory_status_jobs(session)
+        
+            if not jobs_to_update:
+                return
+            
+            for job_id, cups_id, status in jobs_to_update:
+                new_status = cups_mgr.get_job_status(int(cups_id))
+                
+                if new_status is None:
+                    continue
+
+                if status != new_status:
+                    pj_service.update_job_status(str(job_id), new_status, session)
+                        
+
     async def update_printers(self):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.update_printers_sync)
 
+    async def update_jobs(self):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.update_jobs_sync)
+
     def start(self, *args, **kwargs):
         self.add_job(self.update_printers, "interval", seconds=60)
+        self.add_job(self.update_jobs, "interval", seconds=5)
+        
         super().start(*args, **kwargs)

@@ -1,5 +1,7 @@
 import cups
 
+from ..db.models.printerjob import JobStatus
+
 
 class CUPSManager:
     def __init__(self):
@@ -14,6 +16,19 @@ class CUPSManager:
             4: "printing",
             5: "stopped"
         }
+
+        self.JOB_STATE_MAP = {
+            3: JobStatus.PENDING,
+            4: JobStatus.HELD,
+            5: JobStatus.PRINTING,
+            6: JobStatus.STOPPED,
+            7: JobStatus.CANCELLED,
+            8: JobStatus.ABORTED,
+            9: JobStatus.COMPLETED
+        }
+
+        self.MAX_TRIES = 3
+        self.jobs_with_error = {}
 
     def get_printers(self) -> list[dict]:
         """
@@ -59,4 +74,27 @@ class CUPSManager:
         except Exception as e:
             print(e)
             return ""
+        
+    def get_job_status(self, cups_id: int) -> JobStatus | None:
+        if self.conn is None:
+            return None
+
+        try:
+            attrs = self.conn.getJobAttributes(cups_id)
+        except cups.IPPError as e:
+            
+            if not cups_id in self.jobs_with_error:
+                self.jobs_with_error[cups_id] = 0
+            self.jobs_with_error[cups_id] += 1
+
+            if self.jobs_with_error[cups_id] > self.MAX_TRIES:
+                self.jobs_with_error.pop(cups_id)
+                return JobStatus.ABORTED
+            
+            return None
+
+        cups_state = attrs["job-state"]
+
+        return self.JOB_STATE_MAP[cups_state]
+
     

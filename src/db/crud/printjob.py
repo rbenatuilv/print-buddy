@@ -1,8 +1,8 @@
-from sqlmodel import Session, select
-import uuid
+from sqlmodel import Session, select, or_
 
-from ...db.models.printerjob import PrintJob
+from ...db.models.printerjob import PrintJob, JobStatus, TRANSIT_STATUS
 from ...schemas.printjob import PrintJobCreate
+from ...core.utils import generate_time
 
 
 class PrintJobService:
@@ -25,3 +25,44 @@ class PrintJobService:
         session.commit()
 
         return new_printjob
+    
+
+    ########################## READ #########################
+
+    def get_transitory_status_jobs(
+        self,
+        session: Session
+    ):
+        
+        conditions = [PrintJob.status == value for value in TRANSIT_STATUS]
+        stmt = select(PrintJob.id, PrintJob.cups_id, PrintJob.status).where(
+            or_(*conditions)
+        )
+        jobs = session.exec(stmt).all()
+
+        return jobs
+    
+
+    ########################## UPDATE #########################
+
+    def update_job_status(
+        self,
+        job_id: str,
+        new_status: JobStatus,
+        session: Session
+    ):
+        
+        stmt = select(PrintJob).where(PrintJob.id == job_id)
+        job = session.exec(stmt).first()
+
+        if job is None:
+            return None
+
+        job.status = new_status
+
+        if new_status not in TRANSIT_STATUS:
+            job.completed_at = generate_time()
+
+        session.commit()
+
+        return job

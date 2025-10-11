@@ -8,16 +8,26 @@ from ...core.utils import generate_time
 
 class JobStatus(str, Enum):
     PENDING = "pending"
+    HELD = "held"
     PRINTING = "printing"
+    STOPPED = "stopped"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
-    ERROR = "error"
+    ABORTED = "aborted"
+
+
+TRANSIT_STATUS = [
+    JobStatus.PENDING,
+    JobStatus.HELD,
+    JobStatus.PRINTING,
+    JobStatus.STOPPED
+]
 
 
 class PrintJob(SQLModel, table=True):
 
     id: uuid.UUID = Field(
-        default_factory=uuid.uuid4, 
+        default_factory=uuid.uuid4,
         primary_key=True
     )
 
@@ -40,14 +50,14 @@ class PrintJob(SQLModel, table=True):
     color: bool = Field(nullable=False, default=False)
 
     status: JobStatus = Field(
-        default=JobStatus.PENDING, 
+        default=JobStatus.PENDING,
         nullable=False
     )
 
     cost: float = Field(nullable=False, default=0.0)
 
     created_at: datetime = Field(
-        default_factory=generate_time, 
+        default_factory=generate_time,
         nullable=False
     )
 
