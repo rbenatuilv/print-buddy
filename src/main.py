@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from sqlalchemy.exc import OperationalError, InterfaceError
 
 from .core.config import settings
 from .core.scheduler import Scheduler
@@ -27,5 +29,16 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=[settings.URL, "127.0.0.1", "localhost", "archimind", "*.local"]
 )
+
+
+@app.middleware("http")
+async def db_error_handler(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except (OperationalError, InterfaceError) as e:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"detail": "Database connection error"}
+        )
 
 app.include_router(router)
