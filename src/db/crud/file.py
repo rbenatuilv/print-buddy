@@ -1,5 +1,6 @@
 from sqlmodel import Session, select
 import uuid
+from datetime import datetime
 
 from ..models.file import File
 from ...schemas.file import FileCreate
@@ -27,6 +28,19 @@ class FileService:
         return file
 
     ################## READ ####################
+
+    def get_old_files(
+        self,
+        timeframe: datetime,
+        session: Session
+    ):
+        stmt = select(File).where(
+            File.uploaded_at < timeframe
+        )
+
+        files = session.exec(stmt).all()
+
+        return files
 
     def get_file_by_id(
         self,

@@ -25,7 +25,7 @@ class TokenBearer(HTTPBearer):
 
         if token is None:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Unauthorized access"
             )
         
@@ -53,7 +53,7 @@ class AdminTokenBearer(TokenBearer):
             if not is_admin:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="User not authorized"
+                    detail="User not authorized AAAAA"
                 )
             
         return creds

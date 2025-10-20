@@ -1,12 +1,17 @@
 from fastapi import status, HTTPException
 from sqlmodel import Session
+import uuid
 
 from ..db.crud.user import UserService
 from ..db.crud.printer import PrinterService
 from ..db.crud.file import FileService
 from ..db.crud.printjob import PrintJobService
+from ..db.crud.transaction import TransactionService
+
+from ..db.models.transaction import TransactionType
 
 from ..schemas.printjob import PrintJobCreate
+from ..schemas.transaction import TransactionCreate
 
 from .cups_manager import CUPSManager
 
@@ -15,6 +20,7 @@ user_service = UserService()
 printer_service = PrinterService()
 file_service = FileService()
 pj_service = PrintJobService()
+tx_service = TransactionService()
 
 cups_mgr = CUPSManager()
 
@@ -124,5 +130,17 @@ class PrintAssistant:
             printjob.cost,
             session
         )
+
+        balance = user_service.get_user_balance(printjob.user_id, session)
+
+        tx_data = TransactionCreate(
+            user_id=uuid.UUID(printjob.user_id),
+            type=TransactionType.PRINT,
+            amount=-printjob.cost,
+            balance_after=balance,  # type: ignore
+            note=f"Printed file: {pj.file_name}"
+        )
+
+        tx_service.create_transaction(tx_data, session)
 
         return pj

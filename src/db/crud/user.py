@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
 from ..models.user import User
-from ...schemas.user import UserCreate, UserUpdate
+from ...schemas.user import UserCreate, UserUpdate, UserChangePassword
 
 
 class UserService:
@@ -122,6 +122,24 @@ class UserService:
         session.commit()
 
         return user
+    
+    def change_password(
+        self,
+        user_id: str,
+        pwd_info: UserChangePassword,
+        session: Session
+    ):
+        
+        stmt = select(User).where(User.id == user_id)
+        user = session.exec(stmt).first()
+        if user is None:
+            return False
+        
+        user.pwd = pwd_info.new_pwd
+        session.commit()
+
+        return True
+
     
     def discount_credit(self, user_id: str, cost: float, session: Session):
         stmt = select(User).where(User.id == user_id)

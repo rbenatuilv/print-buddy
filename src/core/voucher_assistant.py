@@ -5,16 +5,20 @@ import uuid
 
 from ..db.crud.voucher import VoucherService
 from ..db.crud.user import UserService
+from ..db.crud.transaction import TransactionService
 from ..db.models.voucher import VoucherStatus
+from ..db.models.transaction import TransactionType
 from ..core.config import settings
 
 from ..schemas.voucher import VoucherCreate, VoucherRedeem
+from ..schemas.transaction import TransactionCreate
 
 from ..core.utils import generate_code, generate_time
 
 
 voucher_service = VoucherService()
 user_service = UserService()
+tx_service = TransactionService()
 
 
 class VoucherAssistant:
@@ -133,6 +137,20 @@ class VoucherAssistant:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Voucher not found"
             )
+        
+        balance = user_service.get_user_balance(
+                user_id, session
+            )
+
+        tx_data = TransactionCreate(
+            user_id=uuid.UUID(user_id),
+            type=TransactionType.RECHARGE,
+            amount=amount, 
+            balance_after=balance,  # type: ignore
+            note="Voucher redeemed"
+        )
+
+        tx_service.create_transaction(tx_data, session)
         
         return success
         
