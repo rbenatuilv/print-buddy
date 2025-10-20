@@ -2,6 +2,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlmodel import Session, select
 import json
 import asyncio
+from datetime import timedelta
+from pathlib import Path
 
 from .cups_manager import CUPSManager
 from ..db.main import engine
@@ -10,17 +12,23 @@ from ..db.crud.printer import PrinterService
 from ..db.crud.printjob import PrintJobService
 from ..db.crud.user import UserService
 from ..db.crud.transaction import TransactionService
+from ..db.crud.file import FileService
 
 from ..db.models.printerjob import ERROR_STATUS
 from ..db.models.transaction import TransactionType
 from ..schemas.printer import PrinterCUPSUpdate
 from ..schemas.transaction import TransactionCreate
 
+from ..core.utils import generate_time
+from ..core.file_manager import FileManager
+
 
 printer_service = PrinterService()
 pj_service = PrintJobService()
 user_service = UserService()
 tx_service = TransactionService()
+file_service = FileService()
+fm = FileManager()
 
 cups_mgr = CUPSManager()
 
@@ -94,6 +102,19 @@ class Scheduler(AsyncIOScheduler):
 
                         tx_service.create_transaction(tx_data, session)
 
+    def delete_old_files_sync(self):
+        timeframe = generate_time() - timedelta(days=1)
+
+        with Session(engine) as session:
+            old_files = file_service.get_old_files(
+                timeframe, session
+            )
+
+            for file in old_files:
+                file_id = file.id
+                file_service.delete_file(str(file_id), session)
+                path = Path(file.filepath)
+                fm.delete_file(path)
 
     async def update_printers(self):
         loop = asyncio.get_running_loop()
@@ -103,8 +124,13 @@ class Scheduler(AsyncIOScheduler):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.update_jobs_sync)
 
+    async def delete_old_files(self):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.delete_old_files_sync)
+
     def start(self, *args, **kwargs):
         self.add_job(self.update_printers, "interval", seconds=60)
         self.add_job(self.update_jobs, "interval", seconds=5)
+        self.add_job(self.delete_old_files, "interval", seconds=7200)
         
         super().start(*args, **kwargs)
