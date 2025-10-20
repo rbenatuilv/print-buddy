@@ -4,6 +4,7 @@ import uuid
 
 from ..db.models.file import File
 from ..db.models.printer import Printer
+from ..db.models.printerjob import JobStatus
 
 from .print import PrintOptions
 
@@ -32,9 +33,12 @@ class PrintJobCreate(BaseModel):
 
 
 class PrintJobRead(BaseModel):
+    id: uuid.UUID
     printer_name: str
     file_name: str
     pages: int
     color: bool
     cost: float
+    status: JobStatus
     created_at: datetime
+    completed_at: datetime | None = None

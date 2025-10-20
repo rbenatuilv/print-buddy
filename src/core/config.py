@@ -29,6 +29,8 @@ class Settings(BaseSettings):
 
     EXP_TIME_VOUCHER_MIN: int
 
+    TELEGRAM_SECRET: str
+
     @computed_field()
     @property
     def DB_PATH(self) -> str:

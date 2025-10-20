@@ -1,8 +1,13 @@
 from sqlmodel import Session, select, or_
 
-from ...db.models.printerjob import PrintJob, JobStatus, TRANSIT_STATUS
+from ...db.models.printerjob import PrintJob, JobStatus, TRANSIT_STATUS, ERROR_STATUS
 from ...schemas.printjob import PrintJobCreate
 from ...core.utils import generate_time
+
+from .user import UserService
+
+
+user_service = UserService()
 
 
 class PrintJobService:
@@ -28,6 +33,16 @@ class PrintJobService:
     
 
     ########################## READ #########################
+
+    def get_jobs_by_id(
+        self,
+        user_id: str,
+        session: Session
+    ):
+        stmt = select(PrintJob).where(PrintJob.user_id == user_id)
+        jobs = session.exec(stmt).all()
+
+        return jobs
 
     def get_transitory_status_jobs(
         self,

@@ -6,6 +6,8 @@ from ..dependencies.database import SessionDep
 from ...schemas.print import PrintOptions
 from ...schemas.printjob import PrintJobCreate, PrintJobRead
 
+from ...db.crud.printjob import PrintJobService
+
 from ...core.utils import count_pages_in_range
 from ...core.print_assistant import PrintAssistant
 
@@ -13,6 +15,21 @@ from ...core.print_assistant import PrintAssistant
 router = APIRouter()
 
 print_assistant = PrintAssistant()
+pj_service = PrintJobService()
+
+
+@router.get(
+    '/my-jobs',
+    response_model=list[PrintJobRead],
+    status_code=status.HTTP_200_OK
+)
+def get_my_jobs(
+    token: TokenDep,
+    session: SessionDep
+):
+    user_id = token.credentials
+    jobs = pj_service.get_jobs_by_id(user_id, session)
+    return jobs
 
 
 @router.post(

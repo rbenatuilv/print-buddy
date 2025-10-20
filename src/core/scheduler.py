@@ -9,14 +9,18 @@ from ..db.main import engine
 from ..db.crud.printer import PrinterService
 from ..db.crud.printjob import PrintJobService
 from ..db.crud.user import UserService
+from ..db.crud.transaction import TransactionService
 
 from ..db.models.printerjob import ERROR_STATUS
+from ..db.models.transaction import TransactionType
 from ..schemas.printer import PrinterCUPSUpdate
+from ..schemas.transaction import TransactionCreate
 
 
 printer_service = PrinterService()
 pj_service = PrintJobService()
 user_service = UserService()
+tx_service = TransactionService()
 
 cups_mgr = CUPSManager()
 
@@ -77,6 +81,19 @@ class Scheduler(AsyncIOScheduler):
                     job = pj_service.update_job_status(str(job_id), new_status, session)
                     if job is not None and new_status in ERROR_STATUS:
                         user_service.add_credit(str(job.user_id), job.cost, session)
+
+                        balance = user_service.get_user_balance(str(job.user_id), session)
+
+                        tx_data = TransactionCreate(
+                            user_id=job.user_id,
+                            type=TransactionType.REFUND,
+                            amount=job.cost,
+                            balance_after=balance,  # type: ignore
+                            note=f"Refunded from file print: {job.file_name}"
+                        )
+
+                        tx_service.create_transaction(tx_data, session)
+
 
     async def update_printers(self):
         loop = asyncio.get_running_loop()

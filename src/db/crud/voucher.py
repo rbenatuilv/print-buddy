@@ -4,6 +4,11 @@ from ..models.voucher import Voucher, VoucherStatus
 from ...schemas.voucher import VoucherCreate, VoucherRedeem
 from ...core.utils import generate_time
 
+from .user import UserService
+
+
+user_service = UserService()
+
 
 class VoucherService:
 
@@ -80,6 +85,7 @@ class VoucherService:
         voucher.redeemed_at = generate_time()
 
         session.commit()
+
         return True
     
     def revoke_voucher(

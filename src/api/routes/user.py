@@ -1,18 +1,25 @@
 from fastapi import APIRouter, status, HTTPException
 from pathlib import Path
+import uuid
 
 from ..dependencies.token import TokenDep, AdminTokenDep
 from ..dependencies.database import SessionDep
 
-from ...schemas.user import UserRead, UserUpdate, UserAdminRead
+from ...schemas.user import UserRead, UserUpdate, UserAdminRead, UserChangePassword
 from ...db.crud.user import UserService
+
+from ...schemas.transaction import TransactionCreate
+from ...db.crud.transaction import TransactionService
+from ...db.models.transaction import TransactionType
 
 from ...core.file_manager import FileManager
 from ...core.config import settings
+from ...core.security import Security
 
 
 router = APIRouter()
 user_service = UserService()
+tx_service = TransactionService()
 fm = FileManager()
 
 
@@ -83,6 +90,49 @@ def update_me(
         )
     
     return user
+
+
+@router.patch(
+    "/change-password",
+    status_code=status.HTTP_200_OK
+)
+def change_password(
+    pwd_info: UserChangePassword,
+    token: TokenDep,
+    session: SessionDep
+):
+    
+    user_id = token.credentials
+
+    user = user_service.get_user_by_id(user_id, session)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    is_pwd = Security.verify_password(pwd_info.current_pwd, user.pwd)
+    if not is_pwd:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Incorrect password"
+        )
+    
+    pwd_info.new_pwd = Security.hash_password(pwd_info.new_pwd)
+
+    success = user_service.change_password(
+        user_id,
+        pwd_info,
+        session
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return { "success": True }
 
 
 @router.get(
@@ -158,6 +208,48 @@ def update_user(
             detail='User not found'
         )
     
+    return user
+
+
+@router.patch(
+    "/balance-adjust/{user_id}/{amount}",
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK
+)
+def adjust_user_balance(
+    user_id: str,
+    amount: float,
+    token: AdminTokenDep,
+    session: SessionDep
+):
+    admin_id = token.credentials
+    user = user_service.get_user_by_id(user_id, session)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    balance = user.balance
+    diff = amount - balance
+    if diff >= 0:
+        user_service.add_credit(user_id, diff, session)
+    else:
+        user_service.discount_credit(user_id, -diff, session)
+
+    balance = user_service.get_user_balance(user_id, session)
+    admin = user_service.get_username_by_id(admin_id, session)
+
+    tx_data = TransactionCreate(
+        user_id=uuid.UUID(user_id),
+        type=TransactionType.ADJUSTMENT,
+        amount=diff,
+        balance_after=balance,  # type: ignore
+        note=f"Recharge made by {admin}"
+    )
+
+    tx_service.create_transaction(tx_data, session)
+
     return user
 
 
