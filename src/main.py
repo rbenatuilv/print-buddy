@@ -24,12 +24,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[settings.URL, "127.0.0.1", "localhost", "archimind", "*.local"]
+    allowed_hosts=[settings.URL, "127.0.0.1", "localhost", "archimind", "*.local", "backend"]
 )
 
 
@@ -58,4 +58,4 @@ async def db_error_handler(request: Request, call_next):
             content={"detail": "Database connection error"}
         )
 
-app.include_router(router)
+app.include_router(router, prefix="/api")
