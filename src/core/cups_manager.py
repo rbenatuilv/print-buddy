@@ -1,5 +1,6 @@
 import cups
 
+from .logger import logger
 from ..db.models.printerjob import JobStatus
 
 
@@ -8,7 +9,7 @@ class CUPSManager:
         try: 
             self.conn = cups.Connection()
         except:
-            print("FAILED TO CONNECT TO CUPS")
+            logger.error("Failed to connect to CUPS")
             self.conn = None
 
         self.CUPS_STATE_MAP = {

@@ -2,14 +2,17 @@ from fastapi import APIRouter, status
 
 from .routes import auth, user, printer, file, print, voucher, transaction, telegram
 
+from ..core.logger import logger
 
-router = APIRouter()
+
+router = APIRouter(prefix="/api")
 
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
 )
 def root():
+    logger.info("This is a test")
     return {
         "message": "Hello World"
     }

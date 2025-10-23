@@ -21,6 +21,7 @@ from ..schemas.transaction import TransactionCreate
 
 from ..core.utils import generate_time
 from ..core.file_manager import FileManager
+from .logger import logger
 
 
 printer_service = PrinterService()
@@ -66,6 +67,8 @@ class Scheduler(AsyncIOScheduler):
             for data in printers_data:
 
                 print_update = PrinterCUPSUpdate(**data)
+
+                logger.info(f"SCHEDULER: Changing state of printer {print_update.name} to {print_update.status}")
                 printer_service.update_printer_CUPS(
                     printer_update=print_update,
                     session=session
@@ -101,6 +104,7 @@ class Scheduler(AsyncIOScheduler):
                         )
 
                         tx_service.create_transaction(tx_data, session)
+                        logger.info(f"SCHEDULER: Refunded user {job.user_id} the amount of {job.cost}")
 
     def delete_old_files_sync(self):
         timeframe = generate_time() - timedelta(days=1)
@@ -115,6 +119,9 @@ class Scheduler(AsyncIOScheduler):
                 file_service.delete_file(str(file_id), session)
                 path = Path(file.filepath)
                 fm.delete_file(path)
+            
+            if old_files:
+                logger.info(f"SCHEDULER: Deleted {len(old_files)} old files from system")
 
     async def update_printers(self):
         loop = asyncio.get_running_loop()

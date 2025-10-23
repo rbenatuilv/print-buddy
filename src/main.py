@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.scheduler import Scheduler
+from .core.logger import logger
 from .api import router
 
 
@@ -53,9 +54,11 @@ async def db_error_handler(request: Request, call_next):
     try:
         return await call_next(request)
     except (OperationalError, InterfaceError) as e:
+        logger.error("Database connection error")
+
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"detail": "Database connection error"}
         )
 
-app.include_router(router, prefix="/api")
+app.include_router(router)
