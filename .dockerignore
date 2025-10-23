@@ -1,0 +1,32 @@
+# Archivos de entorno (sensibles)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Archivos de dependencias o entornos locales
+venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de logs o temporales
+*.log
+*.tmp
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de control de versiones
+.git
+.gitignore
+
+# Cachés de pip y build
+pip-wheel-metadata
+*.egg-info
+build/
+dist/
+.cache

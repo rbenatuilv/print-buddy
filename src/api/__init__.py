@@ -14,6 +14,10 @@ def root():
         "message": "Hello World"
     }
 
+@router.get("/health")
+def health():
+    return {"status": "ok"}
+
 
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(user.router, prefix="/users", tags=["users"])

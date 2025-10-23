@@ -148,9 +148,6 @@ class UserService:
         if user is None:
             return False
         
-        if user.balance < cost:
-            return False
-        
         user.balance -= cost
         session.commit()
 
