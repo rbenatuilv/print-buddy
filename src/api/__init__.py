@@ -1,26 +1,62 @@
 from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
 
 from .routes import auth, user, printer, file, print, voucher, transaction, telegram
 
 from ..core.logger import logger
+from ..core.config import settings
+from ..core.utils import generate_time
+from ..core.healthcheck import run_healthcheck
 
 
 router = APIRouter(prefix="/api")
 
-@router.get(
-    "/",
-    status_code=status.HTTP_200_OK,
-)
+
+@router.get("/", status_code=status.HTTP_200_OK)
 def root():
-    logger.info("This is a test")
+    logger.info("Base route accessed")
+    
+    health = run_healthcheck()
+    overall_ok = all(c["status"] == "ok" for c in health.values())
+
     return {
-        "message": "Hello World"
+        "app": "Printing Backend Service",
+        "version": settings.VERSION,
+        "status": "ok" if overall_ok else "error",
+        "timestamp": generate_time(),
+        "health_summary": {
+            key: value["status"] for key, value in health.items()
+        },
+        "docs": "/docs",
+        "health_endpoint": "/api/health"
     }
 
-@router.get("/health")
-def health():
-    return {"status": "ok"}
 
+@router.get("/health")
+def health_check():
+    """
+    Health check endpoint for Docker and monitoring.
+    Returns HTTP 200 if all critical components are OK,
+    HTTP 503 if any critical component is failing.
+    """
+    status_info = run_healthcheck()
+    
+    # Determine overall status
+    overall_ok = all(component["status"] == "ok" for component in status_info.values())
+
+    # Log if there is a failure
+    if not overall_ok:
+        failed_components = [name for name, comp in status_info.items() if comp["status"] != "ok"]
+        logger.warning(f"Health check failed for components: {failed_components}")
+
+    # Return HTTP 200 if healthy, 503 if any failure
+    return JSONResponse(
+        content={
+            "status": "ok" if overall_ok else "error",
+            "components": status_info
+        },
+        status_code=status.HTTP_200_OK if overall_ok else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
 
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(user.router, prefix="/users", tags=["users"])
