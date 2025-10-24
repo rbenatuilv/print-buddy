@@ -14,6 +14,7 @@ from ..schemas.voucher import VoucherCreate, VoucherRedeem
 from ..schemas.transaction import TransactionCreate
 
 from ..core.utils import generate_code, generate_time
+from .logger import logger
 
 
 voucher_service = VoucherService()
@@ -37,6 +38,7 @@ class VoucherAssistant:
             retry += 1
 
         if retry >= self.MAX_CODE_GEN_RETRIES:
+            logger.error("Unable to generate code, too many collisions")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to generate code, too many collisions"

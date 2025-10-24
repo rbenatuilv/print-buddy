@@ -1,5 +1,5 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlmodel import Session, select
+from sqlmodel import Session
 import json
 import asyncio
 from datetime import timedelta
@@ -21,6 +21,7 @@ from ..schemas.transaction import TransactionCreate
 
 from ..core.utils import generate_time
 from ..core.file_manager import FileManager
+from .logger import logger
 
 
 printer_service = PrinterService()
@@ -38,6 +39,42 @@ class Scheduler(AsyncIOScheduler):
         super().__init__(*args, **kwargs)
 
         self.printers_data = []
+
+    @staticmethod
+    def run_in_executor(sync_func):
+        """Decorator to execute sync methods in a thread executor."""
+        async def wrapper(self, *args, **kwargs):
+            try:
+                loop = asyncio.get_running_loop()
+                return await loop.run_in_executor(None, lambda: sync_func(self, *args, **kwargs))
+            except asyncio.CancelledError:
+                logger.warning(f"SCHEDULER: Process {sync_func.__name__} cancelled during shutdown")
+                return None
+            except Exception as e:
+                logger.warning(f"SCHEDULER: Process {sync_func.__name__} stopped due to error: {e}")
+
+        return wrapper
+
+    def get_status(self) -> dict:
+        try:
+            if not self.running:
+                return {"status": "error", "message": "Scheduler not running"}
+
+            jobs = []
+            for job in self.get_jobs():
+                jobs.append({
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None
+                })
+
+            if not jobs:
+                return {"status": "warning", "message": "No jobs registered"}
+
+            return {"status": "ok", "jobs": jobs}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
     def _normalize_data(self, printers_data: list[dict]) -> str:
         return json.dumps(printers_data, sort_keys=True)
@@ -66,6 +103,8 @@ class Scheduler(AsyncIOScheduler):
             for data in printers_data:
 
                 print_update = PrinterCUPSUpdate(**data)
+
+                logger.info(f"SCHEDULER: Changing state of printer {print_update.name} to {print_update.status}")
                 printer_service.update_printer_CUPS(
                     printer_update=print_update,
                     session=session
@@ -101,6 +140,7 @@ class Scheduler(AsyncIOScheduler):
                         )
 
                         tx_service.create_transaction(tx_data, session)
+                        logger.info(f"SCHEDULER: Refunded user {job.user_id} the amount of {job.cost}")
 
     def delete_old_files_sync(self):
         timeframe = generate_time() - timedelta(days=1)
@@ -115,22 +155,28 @@ class Scheduler(AsyncIOScheduler):
                 file_service.delete_file(str(file_id), session)
                 path = Path(file.filepath)
                 fm.delete_file(path)
+            
+            if old_files:
+                logger.info(f"SCHEDULER: Deleted {len(old_files)} old files from system")
 
-    async def update_printers(self):
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.update_printers_sync)
+    @run_in_executor
+    def update_printers(self):
+        return self.update_printers_sync()
 
-    async def update_jobs(self):
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.update_jobs_sync)
+    @run_in_executor
+    def update_jobs(self):
+        return self.update_jobs_sync()
 
-    async def delete_old_files(self):
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.delete_old_files_sync)
+    @run_in_executor
+    def delete_old_files(self):
+        return self.delete_old_files_sync()
 
     def start(self, *args, **kwargs):
-        self.add_job(self.update_printers, "interval", seconds=60)
-        self.add_job(self.update_jobs, "interval", seconds=5)
-        self.add_job(self.delete_old_files, "interval", seconds=7200)
+        self.add_job(self.update_printers, "interval", seconds=60, name="printer_updater")
+        self.add_job(self.update_jobs, "interval", seconds=5, name="jobs_updater")
+        self.add_job(self.delete_old_files, "interval", seconds=7200, name="file_cleaner")
         
         super().start(*args, **kwargs)
+
+
+scheduler = Scheduler()

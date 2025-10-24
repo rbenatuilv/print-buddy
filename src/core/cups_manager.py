@@ -1,5 +1,6 @@
 import cups
 
+from .logger import logger
 from ..db.models.printerjob import JobStatus
 
 
@@ -8,7 +9,7 @@ class CUPSManager:
         try: 
             self.conn = cups.Connection()
         except:
-            print("FAILED TO CONNECT TO CUPS")
+            logger.error("Failed to connect to CUPS")
             self.conn = None
 
         self.CUPS_STATE_MAP = {
@@ -37,7 +38,12 @@ class CUPSManager:
         if self.conn is None:
             return []
 
-        printers = self.conn.getPrinters()
+        try:
+            printers = self.conn.getPrinters()
+        except cups.IPPError:
+            logger.error("CUPS Error, unable to retrieve printers")
+            return []
+        
         result = []
         for name, attrs in printers.items():
             result.append({
@@ -96,5 +102,3 @@ class CUPSManager:
         cups_state = attrs["job-state"]
 
         return self.JOB_STATE_MAP[cups_state]
-
-    

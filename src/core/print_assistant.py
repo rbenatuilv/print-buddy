@@ -15,6 +15,8 @@ from ..schemas.transaction import TransactionCreate
 
 from .cups_manager import CUPSManager
 
+from .logger import logger
+
 
 user_service = UserService()
 printer_service = PrinterService()
@@ -42,6 +44,7 @@ class PrintAssistant:
             check = str(file.user_id) == user_id
 
         if not check or file is None:
+            logger.error("File not found or not from user")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="File not found or not from user"
@@ -59,6 +62,7 @@ class PrintAssistant:
         )
 
         if printer is None:
+            logger.error(f"Printer {printer_name} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Printer not found"
@@ -75,6 +79,7 @@ class PrintAssistant:
         
         user_balance = user_service.get_user_balance(user_id, session)
         if user_balance is None:
+            logger.error(f"User {user_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
@@ -91,7 +96,7 @@ class PrintAssistant:
         
         success = user_service.discount_credit(user_id, cost, session)
         if not success:
-            print("WARNING: An error occurred while discounting user balance")
+            logger.error(f"An error occurred while discounting credit from user {user_id}")
 
         return success
       
@@ -114,6 +119,7 @@ class PrintAssistant:
         )
 
         if not cups_id:
+            logger.error(f"Unable to send printjob of file {printjob.file.filename} to CUPS")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to send print job to CUPS service"

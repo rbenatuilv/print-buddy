@@ -12,11 +12,14 @@ from ...schemas.transaction import TransactionCreate
 from ...db.crud.transaction import TransactionService
 from ...db.models.transaction import TransactionType
 
+from ...db.crud.telegram_admin import TelegramAdminService
+
 
 router = APIRouter()
 voucher_assistant = VoucherAssistant()
 user_service = UserService()
 tx_service = TransactionService()
+ta_service = TelegramAdminService()
 
 
 TELEGRAM_ADMINS_FILE = "./src/core/telegram_admins.json"
@@ -239,4 +242,46 @@ def recharge_user(
 
     tx_service.create_transaction(tx_data, session)
     
+    return { "success": True }
+
+
+@router.post(
+    "/add-admin/{username}/{user_telegram_id}",
+    status_code=status.HTTP_201_CREATED
+)
+def add_telegram_admin(
+    user_telegram_id: str,
+    username: str,
+    telegram_id: TelegramID,
+    session: SessionDep
+):
+    ta = ta_service.get_telegram_admin(telegram_id.chat_id, session)
+    if ta is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found"
+        )
+    
+    admin_id = ta.user_id
+
+    is_admin = user_service.user_is_admin(str(admin_id), session)
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not admin"
+        )
+    
+    user = user_service.get_user_by_username(username, session)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    user_id = user.id
+
+    ta_service.create_telegram_admin(
+        str(user_id), user_telegram_id, session
+    )
+
     return { "success": True }

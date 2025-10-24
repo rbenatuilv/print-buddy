@@ -5,6 +5,7 @@ import uuid
 
 from .utils import generate_time
 from .config import settings
+from .logger import logger
 
 
 class Security:
@@ -64,5 +65,5 @@ class Security:
             return payload
         
         except JWTError as e:
-            print("INVALID OR EXPIRED TOKEN")
+            logger.warning("Received an invalid or expired token")
             return None
