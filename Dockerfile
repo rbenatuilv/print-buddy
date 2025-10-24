@@ -8,6 +8,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y \
     libcups2-dev \
     cups \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de la app
