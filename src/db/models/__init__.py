@@ -4,3 +4,4 @@ from .printerjob import PrintJob
 from .file import File
 from .voucher import Voucher
 from .transaction import Transaction
+from .telegram_admin import TelegramAdmin

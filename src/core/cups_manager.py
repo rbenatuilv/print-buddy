@@ -38,7 +38,12 @@ class CUPSManager:
         if self.conn is None:
             return []
 
-        printers = self.conn.getPrinters()
+        try:
+            printers = self.conn.getPrinters()
+        except cups.IPPError:
+            logger.error("CUPS Error, unable to retrieve printers")
+            return []
+        
         result = []
         for name, attrs in printers.items():
             result.append({
@@ -97,5 +102,3 @@ class CUPSManager:
         cups_state = attrs["job-state"]
 
         return self.JOB_STATE_MAP[cups_state]
-
-    
