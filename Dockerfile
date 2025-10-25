@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED=1
 # Instalar dependencias del sistema para pycups
 RUN apt-get update && apt-get install -y \
     libcups2-dev \
-    cups \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
