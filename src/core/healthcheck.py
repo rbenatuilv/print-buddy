@@ -2,19 +2,22 @@ import subprocess
 from sqlmodel import Session, select
 from ..db.main import engine
 from .scheduler import scheduler
+import cups
 
 
 def check_cups() -> dict:
-    """Check local CUPS connection and list available printers."""
+    """Check connection to CUPS and list available printers."""
     try:
-        result = subprocess.run(["lpstat", "-p"], capture_output=True, text=True)
-        if result.returncode == 0:
-            printers = [
-                line.split()[1] for line in result.stdout.splitlines() if line.startswith("printer")
-            ]
-            return {"status": "ok", "printers": printers}
+        conn = cups.Connection()  # usa CUPS_SERVER (socket o hostname)
+        printers = conn.getPrinters()
+
+        if printers:
+            return {"status": "ok", "printers": list(printers.keys())}
         else:
-            return {"status": "error", "message": result.stderr.strip() or "CUPS command failed"}
+            return {"status": "ok", "printers": [], "message": "No printers available"}
+
+    except RuntimeError as e:
+        return {"status": "error", "message": f"Failed to connect to CUPS: {e}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
