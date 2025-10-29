@@ -21,6 +21,7 @@ class UserRead(BaseModel):
     name: str
     surname: str
     balance: float
+    credit_limit: float
 
 
 class UserAdminRead(UserRead):
