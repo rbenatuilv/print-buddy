@@ -31,6 +31,13 @@ class Settings(BaseSettings):
 
     TELEGRAM_SECRET: str
 
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+    
     @computed_field()
     @property
     def DB_PATH(self) -> str:
