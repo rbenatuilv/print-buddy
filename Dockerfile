@@ -23,5 +23,7 @@ COPY . .
 # Exponer puerto de la API
 EXPOSE 8000
 
-# Comando para correr FastAPI con Uvicorn
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+RUN chmod +x /app/scripts/docker-entrypoint.sh
+
+# Comando para correr el docker
+CMD ["/app/scripts/docker-entrypoint.sh"]
