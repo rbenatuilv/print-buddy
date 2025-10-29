@@ -42,6 +42,8 @@ class User(SQLModel, table=True):
 
     balance: float = Field(nullable=False, default=0.0)
 
+    credit_limit: float = Field(nullable=False, default=0.0)
+
     created_at: datetime = Field(
         default_factory=generate_time, 
         nullable=False

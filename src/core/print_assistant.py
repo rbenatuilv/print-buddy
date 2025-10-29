@@ -84,8 +84,16 @@ class PrintAssistant:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        
+        user_credit_limit = user_service.get_user_credit_limit(user_id, session)
+        if user_credit_limit is None:
+            logger.error(f"User {user_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
 
-        return user_balance >= cost
+        return user_balance >= cost - user_credit_limit
     
     def discount_credit(
         self,

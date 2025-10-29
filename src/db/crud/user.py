@@ -100,6 +100,15 @@ class UserService:
         balance = session.exec(stmt).first()
         return balance
     
+    def get_user_credit_limit(
+        self,
+        user_id: str,
+        session: Session
+    ):
+        stmt = select(User.credit_limit).where(User.id == user_id)
+        credit_limit = session.exec(stmt).first()
+        return credit_limit
+    
     ######################## UPDATE ##########################
 
     def update_user(
