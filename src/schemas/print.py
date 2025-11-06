@@ -7,7 +7,7 @@ from ..core.utils import is_valid_page_range
 class SidesOption(str, Enum):
     ONE_SIDED = "one-sided"
     TWO_SIDED_LONG = "two-sided-long-edge"
-    TWO_SIDED_SHORT = "two-sided-shot-edge"
+    TWO_SIDED_SHORT = "two-sided-short-edge"
 
 
 class PrintOptions(BaseModel):
