@@ -10,6 +10,7 @@ from ...db.crud.printjob import PrintJobService
 
 from ...core.utils import count_pages_in_range
 from ...core.print_assistant import PrintAssistant
+from ...core.logger import logger
 
 
 router = APIRouter()
@@ -55,6 +56,7 @@ def print_file(
     # VERIFY PRINT OPTIONS COMPLIANCE (COLOR)
     color = print_options.color
     if color and not printer.admits_color:
+        logger.error(f"Printer {printer_name} does not admit color")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Printer does not admit color"
@@ -68,6 +70,7 @@ def print_file(
         pages = count_pages_in_range(print_options.page_ranges, file.pages)
 
     if pages == 0:
+        logger.error(f"Invalid format of page-ranges: {print_options.page_ranges}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Invalid format of page-ranges"
@@ -78,6 +81,7 @@ def print_file(
     # VERIFY ENOUGH USER CREDITS
     enough_credits = print_assistant.check_enough_credit(user_id, total_price, session)
     if not enough_credits:
+        logger.error(f"User {user_id} has insufficient balance to print")
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="Insufficient balance to print"
