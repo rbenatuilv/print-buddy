@@ -81,6 +81,16 @@ class UserService:
         user = session.exec(statement).first()
 
         return user
+
+    def get_user_by_email(
+        self,
+        email: str,
+        session: Session
+    ):
+        statement = select(User).where(User.email == email)
+        user = session.exec(statement).first()
+
+        return user
     
     def get_users(
         self,
@@ -135,7 +145,7 @@ class UserService:
     def change_password(
         self,
         user_id: str,
-        pwd_info: UserChangePassword,
+        new_pwd: str,
         session: Session
     ):
         
@@ -143,8 +153,8 @@ class UserService:
         user = session.exec(stmt).first()
         if user is None:
             return False
-        
-        user.pwd = pwd_info.new_pwd
+
+        user.pwd = new_pwd
         session.commit()
 
         return True

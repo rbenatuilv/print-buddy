@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXP_MIN: int
+    PWD_RESET_SALT: str
+    PWD_RESET_URL: str
+    PWD_RESET_TIME_MIN: int
 
     DB_SCHEME: str
     DB_HOSTNAME: str

@@ -38,3 +38,18 @@ class UserUpdate(BaseModel):
 class UserChangePassword(BaseModel):
     current_pwd: str
     new_pwd: str
+
+
+class UserBase(BaseModel):
+    username: str
+    name: str
+    surname: str
+    email: EmailStr
+
+
+class UserEmailRequest(BaseModel):
+    email: EmailStr
+
+
+class UserPwdReset(BaseModel):
+    new_pwd: str

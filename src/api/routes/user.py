@@ -118,11 +118,11 @@ def change_password(
             detail="Incorrect password"
         )
     
-    pwd_info.new_pwd = Security.hash_password(pwd_info.new_pwd)
+    new_pwd = Security.hash_password(pwd_info.new_pwd)
 
     success = user_service.change_password(
         user_id,
-        pwd_info,
+        new_pwd,
         session
     )
 
