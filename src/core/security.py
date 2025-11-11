@@ -1,6 +1,7 @@
 from bcrypt import hashpw, gensalt, checkpw
 from datetime import timedelta
 from jose import jwt, JWTError
+from itsdangerous import URLSafeTimedSerializer
 import uuid
 
 from .utils import generate_time
@@ -9,6 +10,8 @@ from .logger import logger
 
 
 class Security:
+
+    serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     
     @classmethod
     def hash_password(cls, password: str) -> str:
@@ -66,4 +69,27 @@ class Security:
         
         except JWTError as e:
             logger.warning("Received an invalid or expired token")
+            return None
+        
+    @classmethod
+    def generate_pwd_reset_token(cls, email: str) -> str:
+        """
+        Generates a password reset token
+        """
+        return cls.serializer.dumps(email, salt=settings.PWD_RESET_SALT)
+
+    @classmethod
+    def verify_pwd_reset_token(cls, token: str, expiration: int = settings.PWD_RESET_TIME_MIN * 60) -> str | None:
+        """
+        Verifies a password reset token
+        """
+        try:
+            email = cls.serializer.loads(
+                token,
+                salt=settings.PWD_RESET_SALT,
+                max_age=expiration
+            )
+            return email
+        except Exception as e:
+            logger.warning("Invalid or expired password reset token")
             return None

@@ -1,11 +1,15 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, BackgroundTasks
 from fastapi import HTTPException
 
 from ..dependencies.database import SessionDep
-from ...schemas.user import UserCreate, UserRead, UserLogin
+
+from ...schemas.user import UserCreate, UserRead, UserLogin, UserEmailRequest, UserBase, UserPwdReset
 from ...schemas.token import AccessTokenResponse
+
 from ...db.crud.user import UserService
+
 from ...core.security import Security
+from ...core.mail_assistant import send_reset_email
 
 
 user_service = UserService()
@@ -73,4 +77,59 @@ def login(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Username or password incorrect"
     )
+
+
+@router.post(
+    "/pwd-reset-request",
+    status_code=status.HTTP_200_OK
+)
+def password_reset_request(
+    email: UserEmailRequest,
+    session: SessionDep,
+    background_tasks: BackgroundTasks
+):
     
+    user_db = user_service.get_user_by_email(email.email, session)
+    if user_db is None:
+        return {"detail": "Password reset email sent"}  # Avoid user enumeration
+    
+    token = Security.generate_pwd_reset_token(user_db.email)
+
+    background_tasks.add_task(
+        send_reset_email,
+        user=UserBase(
+            **user_db.model_dump()
+        ),
+        token=token
+    )
+
+    return {"detail": "Password reset email sent"}
+
+
+@router.post(
+    "/pwd-reset/{token}",
+    status_code=status.HTTP_200_OK
+)
+def password_reset(
+    token: str,
+    new_pwd: UserPwdReset,
+    session: SessionDep
+):
+    email = Security.verify_pwd_reset_token(token)
+    if email is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired token"
+        )
+
+    user_db = user_service.get_user_by_email(email, session)
+    if user_db is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    hashed_pwd = Security.hash_password(new_pwd.new_pwd)
+    user_service.change_password(str(user_db.id), hashed_pwd, session)
+
+    return {"detail": "Password updated successfully"}
