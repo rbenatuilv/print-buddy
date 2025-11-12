@@ -17,6 +17,7 @@ class PrintOptions(BaseModel):
     fit_to_page: bool = True
     color: bool = False
     page_ranges: str = "all"
+    number_up: int = 1 
 
     @property
     def cups_options(self) -> dict:
@@ -29,6 +30,7 @@ class PrintOptions(BaseModel):
             "sides": self.sides,
             "fit-to-page": "true" if self.fit_to_page else "false",
             "print-color-mode": "color" if self.color else "monochrome",
+            "number-up": str(self.number_up),
         }
 
         if self.page_ranges != "all":
