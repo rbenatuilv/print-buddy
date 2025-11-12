@@ -58,6 +58,24 @@ def health_check():
         status_code=status.HTTP_200_OK if overall_ok else status.HTTP_503_SERVICE_UNAVAILABLE
     )
 
+
+@router.get(
+    "/version",
+    status_code=status.HTTP_200_OK,
+    summary="Get the current version of the PrintBuddy App"
+)
+def get_version():
+    """
+    Endpoint to retrieve the current version of the PrintBuddy App.
+    """
+    logger.info("Version endpoint accessed")
+    return {
+        "app": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "timestamp": generate_time()
+    }
+
+
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(user.router, prefix="/users", tags=["users"])
 router.include_router(printer.router, prefix="/printers", tags=["printers"])
