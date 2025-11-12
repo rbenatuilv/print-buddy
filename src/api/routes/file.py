@@ -57,7 +57,7 @@ def upload_file(
     if size == -1:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="File size too large"
+            detail=f"File size too large. Max size: {settings.MAX_FILE_SIZE_MB} MB"
         )
 
     file_data = FileCreate(
